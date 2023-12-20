@@ -10,6 +10,7 @@ export type FinderOptions = {
     autoClose?: boolean;
     filters?: FinderFilters;
     permanentDownloadUrls?: boolean;
+    serviceToken?: string
 };
 
 type FinderFilters = FinderFilter[] | [];

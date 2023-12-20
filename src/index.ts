@@ -29,8 +29,26 @@ export async function create(
     { clientId, domain, options }: OpeningOptions,
     popupConfiguration?: PopupConfiguration,
 ): Promise<FrontifyFinder> {
-    if (!isAuthorized({ clientId })) {
-        const token = (await authorize({ domain, clientId, scopes: FINDER_CLIENT_SCOPES }, popupConfiguration)
+    if (!isAuthorized({ clientId }))
+    {
+        if (options?.serviceToken && domain)
+        {
+            const token: Token = {
+                bearerToken: {
+                    accessToken: options.serviceToken,
+                    domain: domain,
+                    expiresIn: Number.MAX_SAFE_INTEGER,
+                    tokenType: 'Bearer',
+                    refreshToken: options.serviceToken
+                },
+                clientId: clientId, 
+                scopes: FINDER_CLIENT_SCOPES
+            }; 
+            storeAccessToken(token, { clientId });
+        } 
+        else
+        {
+            const token = (await authorize({ domain, clientId, scopes: FINDER_CLIENT_SCOPES }, popupConfiguration)
             .then((token) => {
                 return token;
             })
@@ -40,7 +58,8 @@ export async function create(
                     message: 'Authentication Failed!',
                 });
             })) as Token;
-        storeAccessToken(token, { clientId });
+            storeAccessToken(token, { clientId });
+        }
     }
 
     const token = getItem<Token>(computeStorageKey(clientId));
