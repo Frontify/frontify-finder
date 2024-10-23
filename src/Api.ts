@@ -77,6 +77,7 @@ export type FrontifyAsset = {
     downloadUrl?: string;
     previewUrl?: string;
     dynamicPreviewUrl?: string;
+    thumbnailUrl?: string;
     icon?: string;
     focalPoint?: number[];
     width?: number;
@@ -182,6 +183,7 @@ fragment onVideo on Video {
   downloadUrl(permanent: $permanent)
   previewUrl
   dynamicPreviewUrl
+  thumbnailUrl
   width
   height
   duration
