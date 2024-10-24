@@ -77,6 +77,7 @@ export type FrontifyAsset = {
     downloadUrl?: string;
     previewUrl?: string;
     dynamicPreviewUrl?: string;
+    thumbnailUrl?: string;
     icon?: string;
     focalPoint?: number[];
     width?: number;
@@ -137,6 +138,7 @@ fragment onImage on Image {
   downloadUrl(permanent: $permanent)
   previewUrl
   dynamicPreviewUrl
+  thumbnailUrl
   width
   height
   focalPoint
@@ -150,6 +152,7 @@ fragment onFile on File {
   downloadUrl(permanent: $permanent)
   icon: previewUrl
   dynamicPreviewUrl
+  thumbnailUrl
 }
 
 fragment onDocument on Document {
@@ -161,6 +164,7 @@ fragment onDocument on Document {
   downloadUrl(permanent: $permanent)
   previewUrl
   dynamicPreviewUrl
+  thumbnailUrl
   focalPoint
 }
 
@@ -172,6 +176,7 @@ fragment onAudio on Audio {
   downloadUrl(permanent: $permanent)
   previewUrl
   dynamicPreviewUrl
+  thumbnailUrl
 }
 
 fragment onVideo on Video {
@@ -182,6 +187,7 @@ fragment onVideo on Video {
   downloadUrl(permanent: $permanent)
   previewUrl
   dynamicPreviewUrl
+  thumbnailUrl
   width
   height
   duration
