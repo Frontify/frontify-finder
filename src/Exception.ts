@@ -6,6 +6,7 @@ export class FinderError extends Error {
         message: string,
     ) {
         super(`${code}: ${message}`);
+        this.name = 'FinderError';
         logMessage('error', {
             code,
             message,
