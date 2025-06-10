@@ -1,6 +1,6 @@
-import { authorize, PopupConfiguration, revoke } from '@frontify/frontify-authenticator';
-import { getItem, popItem, setItem, Token } from './Storage';
-import { FrontifyFinder, FinderOptions, FrontifyAsset } from './Finder';
+import { PopupConfiguration, authorize, revoke } from '@frontify/frontify-authenticator';
+import { Token, getItem, popItem, setItem } from './Storage';
+import { FinderOptions, FrontifyAsset, FrontifyFinder } from './Finder';
 import { logMessage } from './Logger';
 import { computeStorageKey } from './Utils';
 import { FinderError } from './Exception';

@@ -1,4 +1,4 @@
-import { FrontifyAsset, Asset, requestAssetsById } from './Api';
+import { Asset, FrontifyAsset, requestAssetsById } from './Api';
 import { Token } from './Storage';
 import { FinderError } from './Exception';
 import { logMessage } from './Logger';
