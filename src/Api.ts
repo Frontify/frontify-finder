@@ -44,26 +44,30 @@ export type Asset = {
 export type FrontifyAsset = {
     id: string;
     title: string;
-    description: string;
+    description: string | null;
     creator: {
         name: string;
     };
     createdAt: string;
     type: string;
-    author: string;
-    expiresAt?: string;
-    licenses?: {
-        title: string;
-        text: string;
-    };
-    copyright?: {
+    author: string | null;
+    expiresAt: string | null;
+    licenses:
+        | {
+              title: string;
+              text: string;
+          }[]
+        | null;
+    copyright: {
         status: string;
         notice: string;
-    };
-    tags?: {
-        value: string;
-        source: string;
-    };
+    } | null;
+    tags:
+        | {
+              value: string;
+              source: string;
+          }[]
+        | null;
     customMetadata: {
         property: {
             id: string;
@@ -79,20 +83,20 @@ export type FrontifyAsset = {
             value: { optionId: string; text: string };
         }[];
     }[];
-    filename: string;
-    extension: string;
-    size: number;
-    downloadUrl?: string;
+    filename?: string | null;
+    extension?: string;
+    size?: number | null;
+    downloadUrl?: string | null;
     previewUrl?: string;
-    dynamicPreviewUrl?: string;
-    thumbnailUrl?: string;
+    dynamicPreviewUrl?: string | null;
+    thumbnailUrl?: string | null;
     icon?: string;
-    focalPoint?: number[];
+    focalPoint?: number[] | null;
     width?: number;
     height?: number;
     duration?: number;
     bitrate?: number;
-    pageCount?: number;
+    pageCount?: number | null;
 };
 
 const ASSET_BY_IDS_QUERY = `
