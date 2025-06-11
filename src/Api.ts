@@ -43,6 +43,7 @@ export type Asset = {
 
 export type FrontifyAsset = {
     id: string;
+    externalId: string | null;
     title: string;
     description: string | null;
     creator: {
@@ -103,6 +104,7 @@ const ASSET_BY_IDS_QUERY = `
 query AssetByIds($ids: [ID!]!, $permanent: Boolean!) {
   assets(ids: $ids) {
     id
+    externalId
     title
     description
     type: __typename
