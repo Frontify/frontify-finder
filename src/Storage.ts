@@ -112,7 +112,7 @@ function isStorageAvailable(storageName: 'localStorage' | 'sessionStorage'): boo
         }
 
         return false;
-    } catch (e) {
+    } catch (error) {
         return false;
     }
 }

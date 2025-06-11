@@ -1,4 +1,4 @@
-import { FrontifyAsset, Asset, requestAssetsById } from './Api';
+import { Asset, FrontifyAsset, requestAssetsById } from './Api';
 import { Token } from './Storage';
 import { FinderError } from './Exception';
 import { logMessage } from './Logger';
@@ -30,7 +30,11 @@ export class FrontifyFinder {
         return 2.0;
     }
 
-    constructor(private token: Token, private options: FinderOptions, private onLogoutRequested: () => void) {
+    constructor(
+        private token: Token,
+        private options: FinderOptions,
+        private onLogoutRequested: () => void,
+    ) {
         this.iFrame = createFinderElement(token.bearerToken.domain);
     }
 

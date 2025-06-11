@@ -9,21 +9,21 @@ export function computeStorageKey(clientId: string): string {
 }
 
 export async function httpCall<JsonResponse>(url: string, init?: RequestInit): Promise<JsonResponse> {
-    return fetch(url, init)
-        .then(async (response) => {
-            if (response.status >= 200 && response.status <= 299) {
-                return (await response.json()) as JsonResponse;
-            }
-            throw new FinderError('ERR_FINDER_HTTP_REQUEST', response.statusText);
-        })
-        .then((response: JsonResponse) => {
-            return response;
-        })
-        .catch((error: Error) => {
-            if (error instanceof FinderError) {
-                throw error;
-            }
+    try {
+        const response = await fetch(url, init);
 
-            throw new FinderError('ERR_FINDER_HTTP_REQUEST', error.message);
-        });
+        if (response.status < 200 || response.status >= 300) {
+            throw new FinderError('ERR_FINDER_HTTP_REQUEST', response.statusText);
+        }
+
+        return await response.json();
+    } catch (error) {
+        if (error instanceof FinderError) {
+            throw error;
+        }
+
+        const errorMesssage = error instanceof Error ? error.message : '';
+
+        throw new FinderError('ERR_FINDER_HTTP_REQUEST', errorMesssage);
+    }
 }
