@@ -1,7 +1,7 @@
+import { version } from '../package.json';
 import { FinderError } from './Exception';
 import { logMessage } from './Logger';
 import { httpCall } from './Utils';
-import { version } from '../package.json';
 
 type Options = {
     domain: string;
@@ -64,13 +64,21 @@ export type FrontifyAsset = {
         value: string;
         source: string;
     };
-    metadataValues?: {
-        value: string | number;
-        metadataField: {
+    customMetadata: {
+        property: {
             id: string;
-            label: string;
+            name: string;
+            type: {
+                name: string;
+            };
         };
-    };
+        value?: {
+            value: string | { optionId: string; text: string };
+        };
+        values?: {
+            value: { optionId: string; text: string };
+        }[];
+    }[];
     filename: string;
     extension: string;
     size: number;
@@ -113,11 +121,19 @@ fragment withMetadata on Asset {
     value
     source
   }
-  metadataValues {
-    value
-    metadataField {
+  customMetadata {
+    property {
       id
-      label
+      name
+      type {
+        name
+      }
+    }
+    ... on CustomMetadataValue {
+      value
+    }
+    ... on CustomMetadataValues {
+      values
     }
   }
   copyright {
