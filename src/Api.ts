@@ -52,6 +52,7 @@ export type FrontifyAsset = {
     type: string;
     author: string | null;
     expiresAt: string | null;
+    alternativeText: string | null;
     licenses:
         | {
               title: string;
@@ -111,6 +112,7 @@ query AssetByIds($ids: [ID!]!, $permanent: Boolean!) {
     }
     createdAt
     expiresAt
+    alternativeText
     ...withMetadata
     ...onImage
     ...onDocument
