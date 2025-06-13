@@ -1,6 +1,6 @@
 {
     "name": "@frontify/frontify-finder",
-    "version": "2.2.0",
+    "version": "3.0.0",
     "description": "Authenticate, search and access Frontify assets data from any secure web app.",
     "files": [
         "dist/**/*"

@@ -1,12 +1,12 @@
-# Frontify Finder v2
+# Frontify Finder
 
 Authenticate, search and access Frontify assets data from any secure web app.
 
-**This package is tightly coupled with the [FrontifyAuthenticator](https://github.com/Frontify/frontify-authenticator) package (@frontify/frontify-authenticator) as it's being used as an internal dependency of the Frontify Finder v2.**
+**This package is tightly coupled with the [FrontifyAuthenticator](https://github.com/Frontify/frontify-authenticator) package (@frontify/frontify-authenticator) as it's being used as an internal dependency of the Frontify Finder.**
 
 # Install
 
-There are three possible ways of installing or requiring the Frontify Finder v2.
+There are three possible ways of installing or requiring the Frontify Finder.
 
 ## NPM
 
@@ -26,7 +26,7 @@ import { create, logout } from '@frontify/frontify-finder';
 
 ## CDN
 
-Alternatively, in case you're not relying on npm packages in your web app, you can also require the minified JS script directly by using a CDN such as UNPKG. You can find the latest [Frontify Finder v2](https://unpkg.com/@frontify/frontify-finder@latest/dist/index.js) source code and import it to your project you by requiring it via a `<script>` HTML element.
+Alternatively, in case you're not relying on npm packages in your web app, you can also require the minified JS script directly by using a CDN such as UNPKG. You can find the latest [Frontify Finder](https://unpkg.com/@frontify/frontify-finder@latest/dist/index.js) source code and import it to your project you by requiring it via a `<script>` HTML element.
 
 ```html
 <script src="https://unpkg.com/@frontify/frontify-finder@latest/dist/index.js"></script>
