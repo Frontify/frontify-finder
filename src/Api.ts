@@ -223,7 +223,7 @@ export async function requestAssetsById(
     { domain, bearerToken, permanentDownloadUrls }: Options,
     ids: Asset[],
 ): Promise<FrontifyAsset[]> {
-    const response = (await httpCall(`https://${domain}/graphql`, {
+    const response: AssetsResponse = await httpCall(`https://${domain}/graphql`, {
         method: 'POST',
         headers: {
             'content-type': 'application/json',
@@ -239,7 +239,7 @@ export async function requestAssetsById(
                 permanent: permanentDownloadUrls,
             },
         }),
-    })) as AssetsResponse;
+    });
 
     if (response.errors) {
         logMessage('error', {
