@@ -1,4 +1,5 @@
 import { version } from '../package.json';
+
 import { FinderError } from './Exception';
 import { logMessage } from './Logger';
 import { httpCall } from './Utils';
@@ -221,9 +222,9 @@ fragment onVideo on Video {
 
 export async function requestAssetsById(
     { domain, bearerToken, permanentDownloadUrls }: Options,
-    ids: Asset[],
+    ids: (string | number)[],
 ): Promise<FrontifyAsset[]> {
-    const response: AssetsResponse = await httpCall(`https://${domain}/graphql`, {
+    const response = await httpCall<AssetsResponse>(`https://${domain}/graphql`, {
         method: 'POST',
         headers: {
             'content-type': 'application/json',

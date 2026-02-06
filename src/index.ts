@@ -1,9 +1,10 @@
-import { PopupConfiguration, authorize, revoke } from '@frontify/frontify-authenticator';
-import { Token, getItem, popItem, setItem } from './Storage';
-import { FinderOptions, FrontifyAsset, FrontifyFinder } from './Finder';
-import { logMessage } from './Logger';
-import { computeStorageKey } from './Utils';
+import { type PopupConfiguration, authorize, revoke } from '@frontify/frontify-authenticator';
+
 import { FinderError } from './Exception';
+import { type FinderOptions, type FrontifyAsset, FrontifyFinder } from './Finder';
+import { logMessage } from './Logger';
+import { type Token, getItem, popItem, setItem } from './Storage';
+import { computeStorageKey } from './Utils';
 
 const FINDER_CLIENT_SCOPES = ['basic:read', 'finder:read'];
 const EXPIRES_IN_LEEWAY = 300;
@@ -48,11 +49,14 @@ export async function create(
         throw new FinderError('ERR_FINDER_ACCESS_STORED_TOKEN', 'Error accessing stored token.');
     }
 
-    return new FrontifyFinder(token, options ?? DEFAULT_OPTIONS, async () => {
-        await logout({ clientId });
-        logMessage('warning', {
-            code: 'WARN_USER_LOGOUT',
-            message: 'User successfully logged out',
+    return new FrontifyFinder(token, options ?? DEFAULT_OPTIONS, () => {
+        // eslint-disable-next-line no-void
+        void logout({ clientId }).then(() => {
+            logMessage('warning', {
+                code: 'WARN_USER_LOGOUT',
+                message: 'User successfully logged out',
+            });
+            return;
         });
     });
 }

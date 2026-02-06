@@ -103,7 +103,7 @@ function isStorageAvailable(storageName: 'localStorage' | 'sessionStorage'): boo
             return false;
         }
 
-        const storage = window[storageName] as Storage;
+        const storage = window[storageName];
 
         storage.setItem(FINDER_STORAGE_ITEM_TEST.key, FINDER_STORAGE_ITEM_TEST.value);
         if (storage.getItem(FINDER_STORAGE_ITEM_TEST.key) === FINDER_STORAGE_ITEM_TEST.value) {
@@ -112,7 +112,7 @@ function isStorageAvailable(storageName: 'localStorage' | 'sessionStorage'): boo
         }
 
         return false;
-    } catch (error) {
+    } catch {
         return false;
     }
 }

@@ -16,7 +16,7 @@ export async function httpCall<JsonResponse>(url: string, init?: RequestInit): P
             throw new FinderError('ERR_FINDER_HTTP_REQUEST', response.statusText);
         }
 
-        return await response.json();
+        return (await response.json()) as JsonResponse;
     } catch (error) {
         if (error instanceof FinderError) {
             throw error;
