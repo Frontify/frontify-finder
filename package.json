@@ -46,7 +46,6 @@
         "@frontify/eslint-config-basic": "^1.0.11",
         "@rollup/plugin-json": "^6.1.0",
         "@rollup/plugin-node-resolve": "^16.0.1",
-        "@types/node": "^16.7.13",
         "esbuild": "^0.25.5",
         "eslint": "^9.39.2",
         "prettier": "^3.5.3",
