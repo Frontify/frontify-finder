@@ -1,3 +1,5 @@
+import { version } from '../package.json';
+
 import { type Asset, type FrontifyAsset, requestAssetsById } from './Api';
 import { FinderError } from './Exception';
 import { logMessage } from './Logger';
@@ -37,10 +39,6 @@ export class FrontifyFinder {
     private readonly iFrame: HTMLIFrameElement;
     private callbacks: FinderCallbacks = {};
     private unsubscribe: (() => void) | undefined;
-
-    private static get VERSION(): number {
-        return 2.0;
-    }
 
     constructor(
         private token: Token,
@@ -104,7 +102,7 @@ export class FrontifyFinder {
     private initialize(): void {
         this.iFrame?.contentWindow?.postMessage(
             {
-                version: FrontifyFinder.VERSION,
+                version,
                 token: this.accessToken,
                 supports: {
                     cancel: true,
