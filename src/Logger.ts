@@ -1,7 +1,7 @@
 export type LogInfo = {
     code: string;
     message: string;
-    error?: any;
+    error?: unknown;
 };
 
 const disabledLogs: {

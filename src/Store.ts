@@ -1,4 +1,5 @@
 export class Store implements Storage {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required by Storage interface
     [name: string]: any;
 
     readonly length: number = 0;
