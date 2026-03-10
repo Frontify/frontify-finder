@@ -2,5 +2,11 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "schedule": ["* 0-11 * * 1"],
-  "timezone": "Europe/Zurich"
+  "timezone": "Europe/Zurich",
+  "packageRules": [
+    {
+      "groupName": "eslint",
+      "matchPackagePatterns": ["eslint"]
+    }
+  ]
 }
