@@ -1,12 +1,12 @@
 {
     "compilerOptions": {
         "target": "esnext",
-        "module": "commonjs",
+        "module": "esnext",
         "noEmit": true,
         "declaration": true,
         "outDir": "./dist",
         "strict": true,
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "lib": ["DOM", "DOM.Iterable", "ESNext"],
