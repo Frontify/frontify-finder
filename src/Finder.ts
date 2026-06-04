@@ -1,9 +1,8 @@
 import { version } from '../package.json';
 
-import { type Asset, type FrontifyAsset, requestAssetsById } from './Api';
+import { type FrontifyAsset } from './Api';
 import { FinderError } from './Exception';
 import { logMessage } from './Logger';
-import { type Token } from './Storage';
 
 export type { FrontifyAsset };
 
@@ -12,6 +11,8 @@ export type FinderOptions = {
     autoClose?: boolean;
     filters?: FinderFilters;
     permanentDownloadUrls?: boolean;
+    /** DEV/CHIPS mock: one-time code the embedded route exchanges for a partitioned session cookie. */
+    sessionCode?: string;
 };
 
 type FinderFilters = FinderFilter[] | [];
@@ -29,7 +30,7 @@ type FinderCallbacks = {
 
 type FinderMessage = {
     configurationRequested?: boolean;
-    assetsChosen?: Asset[];
+    assetsChosen?: FrontifyAsset[];
     aborted?: boolean;
     logout?: boolean;
 };
@@ -41,11 +42,12 @@ export class FrontifyFinder {
     private unsubscribe: (() => void) | undefined;
 
     constructor(
-        private token: Token,
+        private domain: string,
+        private sessionCode: string,
         private options: FinderOptions,
         private onLogoutRequested: () => void,
     ) {
-        this.iFrame = createFinderElement(token.bearerToken.domain);
+        this.iFrame = createFinderElement(domain);
     }
 
     private subscribeToFinderEvents() {
@@ -64,8 +66,7 @@ export class FrontifyFinder {
             }
 
             if (data.assetsChosen) {
-                // eslint-disable-next-line no-void
-                void this.handleAssetsChosen(data.assetsChosen.map((asset: Asset) => asset.id));
+                this.handleAssetsChosen(data.assetsChosen);
                 return;
             }
 
@@ -88,22 +89,14 @@ export class FrontifyFinder {
     }
 
     private get origin(): string {
-        return `https://${this.token.bearerToken.domain}`;
-    }
-
-    private get domain(): string {
-        return this.token.bearerToken.domain;
-    }
-
-    private get accessToken(): string {
-        return this.token.bearerToken.accessToken;
+        return `https://${this.domain}`;
     }
 
     private initialize(): void {
         this.iFrame?.contentWindow?.postMessage(
             {
                 version,
-                token: this.accessToken,
+                sessionCode: this.sessionCode,
                 supports: {
                     cancel: true,
                     logout: true,
@@ -125,31 +118,15 @@ export class FrontifyFinder {
         }
     }
 
-    private async handleAssetsChosen(assetIds: (string | number)[]): Promise<void> {
-        try {
-            const assets: FrontifyAsset[] = await requestAssetsById(
-                {
-                    domain: this.domain,
-                    bearerToken: this.accessToken,
-                    permanentDownloadUrls: this.options?.permanentDownloadUrls ?? false,
-                },
-                assetIds,
-            );
+    private handleAssetsChosen(assets: FrontifyAsset[]): void {
+        // The embedded route already resolves selections via graphql-internal and posts full asset
+        // payloads, so the finder no longer re-fetches by id — it just forwards them to the consumer.
+        if (this.options?.autoClose) {
+            this.close();
+        }
 
-            if (this.options?.autoClose) {
-                this.close();
-            }
-
-            if (this.callbacks.assetsChosen) {
-                this.callbacks.assetsChosen(assets);
-            }
-        } catch (error) {
-            if (!(error instanceof FinderError)) {
-                logMessage('error', {
-                    code: 'ERR_FINDER_ASSETS_SELECTION',
-                    message: 'Failed retrieving assets data.',
-                });
-            }
+        if (this.callbacks.assetsChosen) {
+            this.callbacks.assetsChosen(assets);
         }
     }
 
@@ -202,7 +179,7 @@ function createFinderElement(domain: string): HTMLIFrameElement {
     iFrame.style.height = '100%';
     iFrame.style.display = 'block';
     iFrame.className = 'frontify-finder-iframe';
-    iFrame.src = `https://${domain}/external-asset-chooser`;
+    iFrame.src = `https://${domain}/embedded-asset-chooser?devFlags=NEW_FINDER_REACT_IFRAME`;
     iFrame.name = 'Frontify Finder';
 
     iFrame.sandbox.add('allow-same-origin');

@@ -1,13 +1,11 @@
-import { type PopupConfiguration, authorize, revoke } from '@frontify/frontify-authenticator';
+import { type PopupConfiguration } from '@frontify/frontify-authenticator';
 
 import { FinderError } from './Exception';
 import { type FinderOptions, type FrontifyAsset, FrontifyFinder } from './Finder';
 import { logMessage } from './Logger';
-import { type Token, getItem, popItem, setItem } from './Storage';
-import { computeStorageKey } from './Utils';
+import { type Token } from './Storage';
 
-const FINDER_CLIENT_SCOPES = ['basic:read', 'finder:read'];
-const EXPIRES_IN_LEEWAY = 300;
+const DEFAULT_SESSION_CODE = 'DEV-CODE';
 
 export type { Token, FrontifyAsset, FinderOptions };
 
@@ -26,57 +24,28 @@ const DEFAULT_OPTIONS: FinderOptions = {
     filters: [],
 };
 
+/**
+ * DEV/CHIPS prototype.
+ *
+ * Mounts the embedded asset chooser, which authenticates via a CHIPS partitioned session cookie that
+ * the backend establishes from a one-time session code — so the OAuth popup is skipped entirely.
+ * `popupConfiguration` is accepted for API compatibility but unused in this mode.
+ */
+// eslint-disable-next-line @typescript-eslint/require-await
 export async function create(
-    { clientId, domain, options }: OpeningOptions,
-    popupConfiguration?: PopupConfiguration,
+    { domain, options }: OpeningOptions,
+    _popupConfiguration?: PopupConfiguration,
 ): Promise<FrontifyFinder> {
-    if (!isAuthorized({ clientId })) {
-        const token = (await authorize({ domain, clientId, scopes: FINDER_CLIENT_SCOPES }, popupConfiguration)
-            .then((token) => {
-                return token;
-            })
-            .catch(() => {
-                logMessage('error', {
-                    code: 'ERR_FINDER_AUTH_FAILED',
-                    message: 'Authentication Failed!',
-                });
-            })) as Token;
-        storeAccessToken(token, { clientId });
+    if (!domain) {
+        throw new FinderError('ERR_FINDER_DOMAIN_REQUIRED', 'A domain is required to mount the finder.');
     }
 
-    const token = getItem<Token>(computeStorageKey(clientId));
-    if (!token) {
-        throw new FinderError('ERR_FINDER_ACCESS_STORED_TOKEN', 'Error accessing stored token.');
-    }
+    const sessionCode = options?.sessionCode ?? DEFAULT_SESSION_CODE;
 
-    return new FrontifyFinder(token, options ?? DEFAULT_OPTIONS, () => {
-        // eslint-disable-next-line no-void
-        void logout({ clientId }).then(() => {
-            logMessage('warning', {
-                code: 'WARN_USER_LOGOUT',
-                message: 'User successfully logged out',
-            });
-            return;
+    return new FrontifyFinder(domain, sessionCode, options ?? DEFAULT_OPTIONS, () => {
+        logMessage('warning', {
+            code: 'WARN_USER_LOGOUT',
+            message: 'Logout requested (no-op in CHIPS mock).',
         });
     });
-}
-
-export async function logout({ clientId }: { clientId: string }): Promise<void> {
-    const storageKey = computeStorageKey(clientId);
-    const token = popItem<Token>(storageKey);
-
-    if (token) {
-        await revoke(token);
-    }
-}
-
-function isAuthorized({ clientId }: ClientConfiguration): boolean {
-    const storageKey: string = computeStorageKey(clientId);
-    return !!getItem<Token>(storageKey);
-}
-
-function storeAccessToken(token: Token, { clientId }: ClientConfiguration): void {
-    const expiresIn: number = token.bearerToken.expiresIn - EXPIRES_IN_LEEWAY;
-    const key: string = computeStorageKey(clientId);
-    setItem(key, token, expiresIn);
 }
