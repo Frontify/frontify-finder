@@ -185,6 +185,9 @@ function createFinderElement(domain: string): HTMLIFrameElement {
     iFrame.sandbox.add('allow-same-origin');
     iFrame.sandbox.add('allow-scripts');
     iFrame.sandbox.add('allow-forms');
+    // Required so the embedded chooser can call document.requestStorageAccess() to reach the user's
+    // real first-party Frontify session (Storage Access API).
+    iFrame.sandbox.add('allow-storage-access-by-user-activation');
 
     return iFrame;
 }
