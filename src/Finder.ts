@@ -202,7 +202,7 @@ function createFinderElement(domain: string): HTMLIFrameElement {
     iFrame.style.height = '100%';
     iFrame.style.display = 'block';
     iFrame.className = 'frontify-finder-iframe';
-    iFrame.src = `https://${domain}/external-asset-chooser`;
+    iFrame.src = `https://${domain}/embedded-asset-chooser`;
     iFrame.name = 'Frontify Finder';
 
     iFrame.sandbox.add('allow-same-origin');
