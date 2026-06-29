@@ -204,6 +204,7 @@ function createFinderElement(domain: string): HTMLIFrameElement {
     iFrame.className = 'frontify-finder-iframe';
     iFrame.src = `https://${domain}/embedded-asset-chooser`;
     iFrame.name = 'Frontify Finder';
+    iFrame.allow = 'clipboard-write';
 
     iFrame.sandbox.add('allow-same-origin');
     iFrame.sandbox.add('allow-scripts');
