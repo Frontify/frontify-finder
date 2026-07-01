@@ -246,6 +246,10 @@ export class FrontifyFinder {
         try {
             const assets = await this.hydrateAssets(session.ids);
             dropZone.handler(assets, { x, y, target: dropZone.element });
+
+            if (this.options?.autoClose) {
+                this.close();
+            }
         } catch (error) {
             if (!(error instanceof FinderError)) {
                 logMessage('error', {
