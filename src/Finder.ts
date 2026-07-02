@@ -7,11 +7,14 @@ import { type Token } from './Storage';
 
 export type { FrontifyAsset };
 
+const GHOST_SIZE = 80;
+
 export type FinderOptions = {
     allowMultiSelect?: boolean;
     autoClose?: boolean;
     filters?: FinderFilters;
     permanentDownloadUrls?: boolean;
+    enableDragAndDrop?: boolean;
 };
 
 type FinderFilters = FinderFilter[] | [];
@@ -27,11 +30,36 @@ type FinderCallbacks = {
     assetsChosen?: (assets: FrontifyAsset[]) => void;
 };
 
+export type DropContext = {
+    x: number;
+    y: number;
+    target: Element;
+};
+
+export type DropZoneHandler = (assets: FrontifyAsset[], dropContext: DropContext) => void;
+
+type DragCoordinates = {
+    x: number;
+    y: number;
+};
+
+type DragStartPayload = {
+    ids: (string | number)[];
+    preview?: string;
+};
+
+type DragSession = {
+    ids: (string | number)[];
+};
+
 type FinderMessage = {
     configurationRequested?: boolean;
     assetsChosen?: Asset[];
     aborted?: boolean;
     logout?: boolean;
+    dragStart?: DragStartPayload;
+    pointerMove?: DragCoordinates;
+    pointerUp?: DragCoordinates;
 };
 
 export class FrontifyFinder {
@@ -39,6 +67,9 @@ export class FrontifyFinder {
     private readonly iFrame: HTMLIFrameElement;
     private callbacks: FinderCallbacks = {};
     private unsubscribe: (() => void) | undefined;
+    private readonly dropZones = new WeakMap<Element, DropZoneHandler>();
+    private dragSession: DragSession | undefined;
+    private dragGhost: HTMLElement | undefined;
 
     constructor(
         private token: Token,
@@ -80,6 +111,22 @@ export class FrontifyFinder {
                 return;
             }
 
+            if (data.dragStart) {
+                this.handleDragStart(data.dragStart);
+                return;
+            }
+
+            if (data.pointerMove) {
+                this.handleDragMove(data.pointerMove);
+                return;
+            }
+
+            if (data.pointerUp) {
+                // eslint-disable-next-line no-void
+                void this.handleDragEnd(data.pointerUp);
+                return;
+            }
+
             logMessage('warning', {
                 code: 'WARN_FINDER_UNKNOWN_EVENT',
                 message: 'Unknown event from Frontify Finder.',
@@ -109,6 +156,7 @@ export class FrontifyFinder {
                     logout: true,
                 },
                 multiSelectionAllowed: this.options?.allowMultiSelect ?? false,
+                dragAndDropEnabled: this.options?.enableDragAndDrop ?? false,
                 filters: this.options?.filters,
             },
             this.origin,
@@ -125,16 +173,20 @@ export class FrontifyFinder {
         }
     }
 
+    private hydrateAssets(assetIds: (string | number)[]): Promise<FrontifyAsset[]> {
+        return requestAssetsById(
+            {
+                domain: this.domain,
+                bearerToken: this.accessToken,
+                permanentDownloadUrls: this.options?.permanentDownloadUrls ?? false,
+            },
+            assetIds,
+        );
+    }
+
     private async handleAssetsChosen(assetIds: (string | number)[]): Promise<void> {
         try {
-            const assets: FrontifyAsset[] = await requestAssetsById(
-                {
-                    domain: this.domain,
-                    bearerToken: this.accessToken,
-                    permanentDownloadUrls: this.options?.permanentDownloadUrls ?? false,
-                },
-                assetIds,
-            );
+            const assets: FrontifyAsset[] = await this.hydrateAssets(assetIds);
 
             if (this.options?.autoClose) {
                 this.close();
@@ -153,6 +205,77 @@ export class FrontifyFinder {
         }
     }
 
+    private mapToHostCoordinates({ x, y }: DragCoordinates): DragCoordinates {
+        const rect = this.iFrame.getBoundingClientRect();
+        return { x: rect.left + x, y: rect.top + y };
+    }
+
+    private handleDragStart({ ids, preview }: DragStartPayload): void {
+        this.dragSession = { ids };
+        this.dragGhost = createDragGhost(preview, ids.length);
+        this.parentNode?.ownerDocument.body.appendChild(this.dragGhost);
+    }
+
+    private handleDragMove(coordinates: DragCoordinates): void {
+        if (!this.dragSession || !this.dragGhost) {
+            return;
+        }
+
+        const { x, y } = this.mapToHostCoordinates(coordinates);
+        this.dragGhost.style.opacity = '1';
+        this.dragGhost.style.transform = `translate(${x - GHOST_SIZE / 2}px, ${y - GHOST_SIZE / 2}px)`;
+    }
+
+    private async handleDragEnd(coordinates: DragCoordinates): Promise<void> {
+        const session = this.dragSession;
+        this.dragSession = undefined;
+        this.destroyDragGhost();
+
+        if (!session) {
+            return;
+        }
+
+        const { x, y } = this.mapToHostCoordinates(coordinates);
+        const ownerDocument = this.parentNode?.ownerDocument ?? document;
+        const dropZone = this.resolveDropZone(ownerDocument.elementFromPoint(x, y));
+
+        if (!dropZone) {
+            return;
+        }
+
+        try {
+            const assets = await this.hydrateAssets(session.ids);
+            dropZone.handler(assets, { x, y, target: dropZone.element });
+
+            if (this.options?.autoClose) {
+                this.close();
+            }
+        } catch (error) {
+            if (!(error instanceof FinderError)) {
+                logMessage('error', {
+                    code: 'ERR_FINDER_ASSETS_DROP',
+                    message: 'Failed retrieving dropped assets data.',
+                });
+            }
+        }
+    }
+
+    private resolveDropZone(target: Element | null): { element: Element; handler: DropZoneHandler } | undefined {
+        for (let element = target; element; element = element.parentElement) {
+            const handler = this.dropZones.get(element);
+            if (handler) {
+                return { element, handler };
+            }
+        }
+
+        return undefined;
+    }
+
+    private destroyDragGhost(): void {
+        this.dragGhost?.remove();
+        this.dragGhost = undefined;
+    }
+
     public onAssetsChosen(callback: (assets: FrontifyAsset[]) => void): FrontifyFinder {
         this.callbacks.assetsChosen = callback;
         return this;
@@ -160,6 +283,11 @@ export class FrontifyFinder {
 
     public onCancel(callback: () => void): FrontifyFinder {
         this.callbacks.cancel = callback;
+        return this;
+    }
+
+    public enableDropZone(element: Element, handler: DropZoneHandler): FrontifyFinder {
+        this.dropZones.set(element, handler);
         return this;
     }
 
@@ -188,10 +316,73 @@ export class FrontifyFinder {
                 message: 'Error closing Frontify Finder.',
             });
         } finally {
+            this.destroyDragGhost();
+            this.dragSession = undefined;
             delete this.parentNode;
             delete this.unsubscribe;
         }
     }
+}
+
+const SINGLE_SHADOW = '0 4px 12px rgba(0, 0, 0, 0.25)';
+const STACK_SHADOW = [
+    '0 0 0 1px #d1d5db',
+    '5px 5px 0 -1px #ffffff',
+    '5px 5px 0 0 #d1d5db',
+    '10px 10px 0 -1px #ffffff',
+    '10px 10px 0 0 #d1d5db',
+    '0 8px 18px rgba(0, 0, 0, 0.2)',
+].join(', ');
+
+function createDragGhost(preview: string | undefined, count: number): HTMLElement {
+    const ghost = document.createElement('div');
+    ghost.className = 'frontify-finder-drag-ghost';
+    ghost.style.position = 'fixed';
+    ghost.style.top = '0';
+    ghost.style.left = '0';
+    ghost.style.width = `${GHOST_SIZE}px`;
+    ghost.style.height = `${GHOST_SIZE}px`;
+    ghost.style.borderRadius = '6px';
+    ghost.style.boxShadow = count > 1 ? STACK_SHADOW : SINGLE_SHADOW;
+    ghost.style.backgroundColor = '#e5e7eb';
+    ghost.style.backgroundSize = 'cover';
+    ghost.style.backgroundPosition = 'center';
+    ghost.style.pointerEvents = 'none';
+    ghost.style.zIndex = '2147483647';
+    ghost.style.opacity = '0';
+    ghost.style.transform = 'translate(-9999px, -9999px)';
+
+    if (preview) {
+        ghost.style.backgroundImage = `url("${preview}")`;
+    }
+
+    if (count > 1) {
+        ghost.appendChild(createGhostBadge(count));
+    }
+
+    return ghost;
+}
+
+function createGhostBadge(count: number): HTMLElement {
+    const badge = document.createElement('div');
+    badge.textContent = String(count);
+    badge.style.position = 'absolute';
+    badge.style.top = '-8px';
+    badge.style.right = '-8px';
+    badge.style.minWidth = '20px';
+    badge.style.height = '20px';
+    badge.style.padding = '0 6px';
+    badge.style.boxSizing = 'border-box';
+    badge.style.borderRadius = '10px';
+    badge.style.background = '#111110';
+    badge.style.color = '#ffffff';
+    badge.style.fontFamily = 'sans-serif';
+    badge.style.fontSize = '12px';
+    badge.style.lineHeight = '20px';
+    badge.style.textAlign = 'center';
+    badge.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.3)';
+
+    return badge;
 }
 
 function createFinderElement(domain: string): HTMLIFrameElement {
