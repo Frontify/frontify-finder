@@ -237,7 +237,13 @@ export class FrontifyFinder {
 
         const { x, y } = this.mapToHostCoordinates(coordinates);
         const ownerDocument = this.parentNode?.ownerDocument ?? document;
-        const dropZone = this.resolveDropZone(ownerDocument.elementFromPoint(x, y));
+        const target = ownerDocument.elementFromPoint(x, y);
+
+        if (target === this.iFrame) {
+            return;
+        }
+
+        const dropZone = this.resolveDropZone(target);
 
         if (!dropZone) {
             return;
