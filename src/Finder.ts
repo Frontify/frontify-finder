@@ -70,6 +70,7 @@ export class FrontifyFinder {
     private readonly dropZones = new WeakMap<Element, DropZoneHandler>();
     private dragSession: DragSession | undefined;
     private dragGhost: HTMLElement | undefined;
+    private hostDragListeners: (() => void) | undefined;
 
     constructor(
         private token: Token,
@@ -123,7 +124,7 @@ export class FrontifyFinder {
 
             if (data.pointerUp) {
                 // eslint-disable-next-line no-void
-                void this.handleDragEnd(data.pointerUp);
+                void this.handleDragEnd(this.mapToHostCoordinates(data.pointerUp));
                 return;
             }
 
@@ -214,28 +215,61 @@ export class FrontifyFinder {
         this.dragSession = { ids };
         this.dragGhost = createDragGhost(preview, ids.length);
         this.parentNode?.ownerDocument.body.appendChild(this.dragGhost);
+        this.armHostDragListeners();
     }
 
     private handleDragMove(coordinates: DragCoordinates): void {
-        if (!this.dragSession || !this.dragGhost) {
+        if (!this.dragSession) {
             return;
         }
 
-        const { x, y } = this.mapToHostCoordinates(coordinates);
+        this.positionGhost(this.mapToHostCoordinates(coordinates));
+    }
+
+    private positionGhost({ x, y }: DragCoordinates): void {
+        if (!this.dragGhost) {
+            return;
+        }
+
         this.dragGhost.style.opacity = '1';
         this.dragGhost.style.transform = `translate(${x - GHOST_SIZE / 2}px, ${y - GHOST_SIZE / 2}px)`;
     }
 
-    private async handleDragEnd(coordinates: DragCoordinates): Promise<void> {
+    private armHostDragListeners(): void {
+        const hostWindow = this.parentNode?.ownerDocument?.defaultView ?? window;
+
+        const onHostPointerMove = (event: PointerEvent): void => {
+            this.positionGhost({ x: event.clientX, y: event.clientY });
+        };
+        const onHostPointerUp = (event: PointerEvent): void => {
+            // eslint-disable-next-line no-void
+            void this.handleDragEnd({ x: event.clientX, y: event.clientY });
+        };
+
+        hostWindow.addEventListener('pointermove', onHostPointerMove, true);
+        hostWindow.addEventListener('pointerup', onHostPointerUp, true);
+
+        this.hostDragListeners = () => {
+            hostWindow.removeEventListener('pointermove', onHostPointerMove, true);
+            hostWindow.removeEventListener('pointerup', onHostPointerUp, true);
+        };
+    }
+
+    private disarmHostDragListeners(): void {
+        this.hostDragListeners?.();
+        this.hostDragListeners = undefined;
+    }
+
+    private async handleDragEnd({ x, y }: DragCoordinates): Promise<void> {
         const session = this.dragSession;
         this.dragSession = undefined;
         this.destroyDragGhost();
+        this.disarmHostDragListeners();
 
         if (!session) {
             return;
         }
 
-        const { x, y } = this.mapToHostCoordinates(coordinates);
         const ownerDocument = this.parentNode?.ownerDocument ?? document;
         const target = ownerDocument.elementFromPoint(x, y);
 
@@ -323,6 +357,7 @@ export class FrontifyFinder {
             });
         } finally {
             this.destroyDragGhost();
+            this.disarmHostDragListeners();
             this.dragSession = undefined;
             delete this.parentNode;
             delete this.unsubscribe;
