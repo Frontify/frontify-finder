@@ -1,6 +1,6 @@
 {
     "name": "@frontify/frontify-finder",
-    "version": "3.0.2",
+    "version": "3.1.0-beta.1",
     "description": "Authenticate, search and access Frontify assets data from any secure web app.",
     "files": [
         "dist/**/*"
@@ -9,6 +9,7 @@
     "main": "dist/index.umd.js",
     "exports": {
         ".": {
+            "types": "./dist/index.d.ts",
             "import": "./dist/index.es.js",
             "require": "./dist/index.umd.js"
         }
@@ -46,16 +47,15 @@
         "@frontify/eslint-config-basic": "^1.0.11",
         "@rollup/plugin-json": "^6.1.0",
         "@rollup/plugin-node-resolve": "^16.0.1",
-        "@types/node": "^16.7.13",
-        "esbuild": "^0.25.5",
+        "esbuild": "^0.28.0",
         "eslint": "^9.39.2",
         "prettier": "^3.5.3",
-        "rollup": "^4.42.0",
+        "rollup": "^4.59.0",
         "rollup-plugin-dts": "^6.2.1",
         "rollup-plugin-esbuild": "^6.2.1",
-        "typescript": "^5.8.0"
+        "typescript": "^6.0.0"
     },
     "dependencies": {
-        "@frontify/frontify-authenticator": "^2.0.0-beta.3"
+        "@frontify/frontify-authenticator": "^2.0.2-beta.3"
     }
 }

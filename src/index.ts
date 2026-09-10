@@ -1,7 +1,13 @@
 import { type PopupConfiguration, authorize, revoke } from '@frontify/frontify-authenticator';
 
 import { FinderError } from './Exception';
-import { type FinderOptions, type FrontifyAsset, FrontifyFinder } from './Finder';
+import {
+    type DropContext,
+    type DropZoneHandler,
+    type FinderOptions,
+    type FrontifyAsset,
+    FrontifyFinder,
+} from './Finder';
 import { logMessage } from './Logger';
 import { type Token, getItem, popItem, setItem } from './Storage';
 import { computeStorageKey } from './Utils';
@@ -9,7 +15,7 @@ import { computeStorageKey } from './Utils';
 const FINDER_CLIENT_SCOPES = ['basic:read', 'finder:read'];
 const EXPIRES_IN_LEEWAY = 300;
 
-export type { Token, FrontifyAsset, FinderOptions };
+export type { Token, FrontifyAsset, FinderOptions, DropContext, DropZoneHandler };
 
 type ClientConfiguration = {
     clientId: string;
