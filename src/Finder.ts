@@ -1,7 +1,7 @@
-import { Asset, FrontifyAsset, requestAssetsById } from './Api';
-import { Token } from './Storage';
+import { type Asset, type FrontifyAsset, requestAssetsById } from './Api';
 import { FinderError } from './Exception';
 import { logMessage } from './Logger';
+import { type Token } from './Storage';
 
 export type { FrontifyAsset };
 
@@ -20,11 +20,23 @@ type FinderFilter = {
     inverted: boolean;
 };
 
+type FinderCallbacks = {
+    cancel?: () => void;
+    assetsChosen?: (assets: FrontifyAsset[]) => void;
+};
+
+type FinderMessage = {
+    configurationRequested?: boolean;
+    assetsChosen?: Asset[];
+    aborted?: boolean;
+    logout?: boolean;
+};
+
 export class FrontifyFinder {
     private parentNode: HTMLElement | undefined;
     private readonly iFrame: HTMLIFrameElement;
-    private listeners: { [key: string]: CallableFunction } = {};
-    private unsubscribe: CallableFunction | undefined;
+    private callbacks: FinderCallbacks = {};
+    private unsubscribe: (() => void) | undefined;
 
     private static get VERSION(): number {
         return 2.0;
@@ -46,26 +58,25 @@ export class FrontifyFinder {
                 return;
             }
 
-            if (event.data.configurationRequested) {
+            const data = event.data as FinderMessage;
+
+            if (data.configurationRequested) {
                 this.initialize();
                 return;
             }
 
-            if (event.data.assetsChosen) {
-                try {
-                    this.handleAssetsChosen(event.data.assetsChosen.map((asset: Asset) => asset.id));
-                } catch (error) {
-                    throw error;
-                }
+            if (data.assetsChosen) {
+                // eslint-disable-next-line no-void
+                void this.handleAssetsChosen(data.assetsChosen.map((asset: Asset) => asset.id));
                 return;
             }
 
-            if (event.data.aborted) {
+            if (data.aborted) {
                 this.handleFinderCancel();
                 return;
             }
 
-            if (event.data.logout) {
+            if (data.logout) {
                 this.onLogoutRequested();
                 this.handleFinderCancel();
                 return;
@@ -111,12 +122,12 @@ export class FrontifyFinder {
             this.close();
         }
 
-        if (this.listeners['cancel']) {
-            this.listeners['cancel']();
+        if (this.callbacks.cancel) {
+            this.callbacks.cancel();
         }
     }
 
-    private async handleAssetsChosen(assetIds: Asset[]): Promise<void> {
+    private async handleAssetsChosen(assetIds: (string | number)[]): Promise<void> {
         try {
             const assets: FrontifyAsset[] = await requestAssetsById(
                 {
@@ -131,8 +142,8 @@ export class FrontifyFinder {
                 this.close();
             }
 
-            if (this.listeners['assetsChosen']) {
-                this.listeners['assetsChosen'](assets);
+            if (this.callbacks.assetsChosen) {
+                this.callbacks.assetsChosen(assets);
             }
         } catch (error) {
             if (!(error instanceof FinderError)) {
@@ -145,12 +156,12 @@ export class FrontifyFinder {
     }
 
     public onAssetsChosen(callback: (assets: FrontifyAsset[]) => void): FrontifyFinder {
-        this.listeners['assetsChosen'] = callback;
+        this.callbacks.assetsChosen = callback;
         return this;
     }
 
     public onCancel(callback: () => void): FrontifyFinder {
-        this.listeners['cancel'] = callback;
+        this.callbacks.cancel = callback;
         return this;
     }
 
@@ -173,7 +184,7 @@ export class FrontifyFinder {
             if (this.parentNode) {
                 this.parentNode.removeChild(this.iFrame);
             }
-        } catch (error) {
+        } catch {
             logMessage('error', {
                 code: 'ERR_FINDER_CLOSE',
                 message: 'Error closing Frontify Finder.',
