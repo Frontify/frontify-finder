@@ -9,11 +9,83 @@ permissions:
     id-token: write
 
 jobs:
+    release-line:
+        runs-on: ubuntu-latest
+
+        outputs:
+            dist-tag: ${{ steps.resolve.outputs.dist-tag }}
+
+        steps:
+            - name: Checkout released commit
+              uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+
+            - name: Use Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version-file: '.nvmrc'
+
+            - name: Resolve and validate the release line
+              id: resolve
+              env:
+                  TAG_NAME: ${{ github.event.release.tag_name }}
+                  IS_PRERELEASE: ${{ github.event.release.prerelease }}
+              run: |
+                  set -euo pipefail
+
+                  VERSION="$(node -p "require('./package.json').version")"
+
+                  if [ "$TAG_NAME" != "v$VERSION" ]; then
+                      echo "::error::Release tag '$TAG_NAME' does not match package.json version '$VERSION'."
+                      exit 1
+                  fi
+
+                  # A prerelease version (3.2.0-beta.0) ships from next as `beta`,
+                  # a stable version (3.0.2) ships from main as `latest`.
+                  case "$VERSION" in
+                      *-*)
+                          LINE='next'
+                          DIST_TAG='beta'
+                          EXPECTED_PRERELEASE='true'
+                          ;;
+                      *)
+                          LINE='main'
+                          DIST_TAG='latest'
+                          EXPECTED_PRERELEASE='false'
+                          ;;
+                  esac
+
+                  if [ "$IS_PRERELEASE" != "$EXPECTED_PRERELEASE" ]; then
+                      echo "::error::Version '$VERSION' requires the GitHub release pre-release flag to be $EXPECTED_PRERELEASE. Fix the release, then re-run this workflow."
+                      exit 1
+                  fi
+
+                  if ! git rev-parse --verify --quiet "refs/remotes/origin/$LINE" > /dev/null; then
+                      echo "::error::Branch '$LINE' does not exist, but version '$VERSION' has to be released from it."
+                      exit 1
+                  fi
+
+                  if ! git merge-base --is-ancestor "$GITHUB_SHA" "refs/remotes/origin/$LINE"; then
+                      echo "::error::Commit $GITHUB_SHA is not on '$LINE'. Stable versions are released from 'main', prereleases from 'next'."
+                      exit 1
+                  fi
+
+                  if [ "$LINE" = 'next' ] && git rev-parse --verify --quiet refs/remotes/origin/main > /dev/null; then
+                      if git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main; then
+                          echo "::error::Commit $GITHUB_SHA is already on 'main'. Prereleases are cut from commits that only exist on 'next'."
+                          exit 1
+                      fi
+                  fi
+
+                  echo "dist-tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
+                  echo "Publishing $VERSION from '$LINE' as '$DIST_TAG'." >> "$GITHUB_STEP_SUMMARY"
+
     checks:
         runs-on: ubuntu-latest
 
         steps:
-            - name: Checkout default branch
+            - name: Checkout released commit
               uses: actions/checkout@v6
 
             - name: Use Node.js
@@ -33,11 +105,10 @@ jobs:
     publish:
         runs-on: ubuntu-latest
 
-        needs: checks
-
+        needs: [release-line, checks]
 
         steps:
-            - name: Checkout default branch
+            - name: Checkout released commit
               uses: actions/checkout@v6
 
             - name: Use Node.js (npm repository)
@@ -53,4 +124,4 @@ jobs:
               run: npm run build
 
             - name: Publish to npm
-              run: npm publish --access public --tag ${{ github.event.release.prerelease && 'beta' || 'latest' }}
+              run: npm publish --access public --tag ${{ needs.release-line.outputs.dist-tag }}

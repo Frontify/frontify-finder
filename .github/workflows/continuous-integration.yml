@@ -3,9 +3,13 @@ name: Continuous Integration
 on:
     push:
         branches:
+            - 'main'
+            - 'next'
             - 'master'
     pull_request:
         branches:
+            - 'main'
+            - 'next'
             - 'master'
 
 permissions:
