@@ -3,10 +3,17 @@ name: Continuous Integration
 on:
     push:
         branches:
+            - 'main'
+            - 'next'
             - 'master'
     pull_request:
         branches:
+            - 'main'
+            - 'next'
             - 'master'
+
+permissions:
+    contents: read
 
 env:
     CI: true
@@ -17,10 +24,10 @@ jobs:
 
         steps:
             - name: Checkout current commit
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
 
             - name: Use Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                   node-version-file: '.nvmrc'
 
