@@ -117,7 +117,6 @@ query AssetByIds($ids: [ID!]!, $permanent: Boolean!) {
     createdAt
     expiresAt
     alternativeText
-    isDecorative
     ...withMetadata
     ...onImage
     ...onDocument
@@ -159,6 +158,7 @@ fragment withMetadata on Asset {
 
 fragment onImage on Image {
   author
+  isDecorative
   filename
   extension
   size
@@ -174,6 +174,7 @@ fragment onImage on Image {
 fragment onFile on File {
   author
   filename
+  isDecorative
   extension
   size
   downloadUrl(permanent: $permanent)
@@ -185,6 +186,7 @@ fragment onFile on File {
 fragment onDocument on Document {
   author
   filename
+  isDecorative
   extension
   size
   pageCount
@@ -198,6 +200,7 @@ fragment onDocument on Document {
 fragment onAudio on Audio {
   author
   filename
+  isDecorative
   extension
   size
   downloadUrl(permanent: $permanent)
@@ -209,6 +212,7 @@ fragment onAudio on Audio {
 fragment onVideo on Video {
   author
   filename
+  isDecorative
   extension
   size
   downloadUrl(permanent: $permanent)
