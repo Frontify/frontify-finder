@@ -441,6 +441,7 @@ function createFinderElement(domain: string): HTMLIFrameElement {
     iFrame.sandbox.add('allow-same-origin');
     iFrame.sandbox.add('allow-scripts');
     iFrame.sandbox.add('allow-forms');
+    iFrame.sandbox.add('allow-downloads');
 
     return iFrame;
 }
