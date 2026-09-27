@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@frontify/frontify-authenticator':
-        specifier: ^2.0.0-beta.3
-        version: 2.0.1
+        specifier: ^2.1.0
+        version: 2.1.0
     devDependencies:
       '@frontify/eslint-config-basic':
         specifier: ^1.0.11
@@ -297,8 +297,8 @@ packages:
       prettier: ^3.0.0
       typescript: ^5.0.0 || ^6.0.0 || ^7.0.0
 
-  '@frontify/frontify-authenticator@2.0.1':
-    resolution: {integrity: sha512-ExOeGYrFuaCiqneqnWHNNqJvJx9CzKI4fkUK6ynV2UweWBzV/PGIF4MBMjuq6Nsr2a0JbOr03Yg/D5n+1J8L6w==}
+  '@frontify/frontify-authenticator@2.1.0':
+    resolution: {integrity: sha512-1fjT48KM0XoCbfqnSWCKVcktRNknMKBeHa98uc/MCBm9Fg9DMEezLz1sYJ7DkexKeeJ/CZCc8R/uX+Im1hfFrg==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -1836,7 +1836,7 @@ snapshots:
       - eslint-plugin-import
       - supports-color
 
-  '@frontify/frontify-authenticator@2.0.1': {}
+  '@frontify/frontify-authenticator@2.1.0': {}
 
   '@humanfs/core@0.19.2':
     dependencies:
