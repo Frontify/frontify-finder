@@ -442,6 +442,8 @@ function createFinderElement(domain: string): HTMLIFrameElement {
     iFrame.sandbox.add('allow-scripts');
     iFrame.sandbox.add('allow-forms');
     iFrame.sandbox.add('allow-downloads');
+    iFrame.sandbox.add('allow-popups');
+    iFrame.sandbox.add('allow-popups-to-escape-sandbox');
 
     return iFrame;
 }
